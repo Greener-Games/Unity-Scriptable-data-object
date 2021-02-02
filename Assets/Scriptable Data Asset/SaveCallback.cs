@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ScriptableDataAsset
+namespace GG.ScriptableDataAsset
 {
     /// <summary>
     /// Holder class for editor save callback

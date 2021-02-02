@@ -3,12 +3,17 @@ using System.IO;
 using UnityEngine;
 using Object = System.Object;
 
-namespace ScriptableDataAsset
+namespace GG.ScriptableDataAsset
 {
     public abstract class ScriptableDataAsset<T> : ScriptableObject where T : ScriptableDataAsset<T>
     {
         protected abstract string AssetName { get; }
         protected virtual string AssetPath => $"Assets/Resources/{AssetName}.asset";
+
+        /// <summary>
+        /// Static reference to the asset in question
+        /// </summary>
+        public static T Asset => LoadAsset();
 
         /// <summary>
         /// Load the asset out of resources

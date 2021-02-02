@@ -3,12 +3,12 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace ScriptableDataAsset.Editor
+namespace GG.ScriptableDataAsset.Editor
 {
     public class ScriptableDataAssetEditor
     {
         [InitializeOnLoadMethod]
-        static void EnsureScriptingDefineSymbol()
+        static void PopulateSaveMethod()
         {
             SaveCallback.save = Save;
         }
