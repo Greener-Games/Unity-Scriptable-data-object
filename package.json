@@ -1,7 +1,7 @@
 {
   "name": "com.greener-games.scriptable-data-asset",
   "displayName": "Scriptable Data Asset",
-  "description": "Singletom scriptable object to hold project data and easily access it",
+  "description": "Singleton scriptable object to hold project data and easily access it",
   "version": "1.0.0",
   "unity": "2019.3",
   "license": "MIT",
