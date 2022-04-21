@@ -1,59 +1,105 @@
+#region
+
 using System;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
-using Object = System.Object;
+
+#endregion
 
 namespace GG.ScriptableDataAsset
 {
-    public abstract class ScriptableDataAsset<T> : ScriptableObject where T : ScriptableDataAsset<T>
+    public abstract partial class ScriptableDataAsset<T> : ScriptableObject where T : ScriptableDataAsset<T>
     {
-        protected abstract string AssetName { get; }
-        protected virtual string AssetPath => $"Assets/Resources/{AssetName}.asset";
+        const string Assets = "assets/";
+        const string SavePathFormat = "{0}Resources/{1}.asset";
+        
+        static readonly bool HasCustomPath = typeof(T).IsDefined(typeof(ScriptableDataAssetSettingsAttribute), true);
 
         /// <summary>
-        /// Static reference to the asset in question
+        ///     Local reference to the object
         /// </summary>
-        public static T Asset => LoadAsset();
+        static T LocalAsset;
 
         /// <summary>
-        /// Load the asset out of resources
+        ///     Static reference to the asset in question
+        /// </summary>
+        public static T Asset
+        {
+            get
+            {
+                if (LocalAsset == null)
+                {
+                    CreateAndLoadAsset();
+                }
+
+                return LocalAsset;
+            }
+        }
+
+        /// <summary>
+        ///     Load the asset out of resources
         /// </summary>
         /// <returns></returns>
-        public static T LoadAsset()
+        static T CreateAndLoadAsset()
         {
-            T i = (T) Activator.CreateInstance(typeof(T));
-            T dataAsset = Resources.Load<T>(i.AssetName);
-
-            if (dataAsset == null)
-            {
-                dataAsset = CreateInstance<T>();
-                EnsureResourcesExists();
-                dataAsset.NewAsset(dataAsset);
-                SaveCallback.save?.Invoke(dataAsset, i.AssetPath);
-            }
-
-            return dataAsset;
-        }
-
-        /// <summary>
-        /// What to store in the new asset when it is created
-        /// </summary>
-        protected virtual void NewAsset(T asset)
-        {
+            string path = GetFileName();
             
+            LocalAsset = Resources.Load(path) as T;
+
+            // Create it if it doesn't exist
+            if (LocalAsset == null)
+            {
+                LocalAsset = CreateInstance<T>();
+                LocalAsset.OnCreated();
+                
+                // And save it back out if appropriate
+                Save();
+            }
+            
+            return LocalAsset;
         }
+
+        protected virtual void OnEnable()
+        {
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+                OnLoaded();
+#else
+            OnLoaded();
+#endif
+        }
+        
+        /// <summary>
+        ///     Function called when all scriptable settings are loaded and ready for use
+        /// </summary>
+        protected virtual void OnLoaded()
+        { }
 
         /// <summary>
-        ///     Ensure the resources directory lives at 'Assets' level
+        ///     Function called when a new asset is created
         /// </summary>
-        static void EnsureResourcesExists()
+        protected virtual void OnCreated()
+        { }
+        
+        /// <summary>
+        ///  Get the filename for this ScriptableSettings
+        /// </summary>
+        /// <returns>The filename</returns>
+        static string GetFileName()
         {
-            string path = Path.Combine("Assets", "Resources");
-
-            if (!Directory.Exists(path))
+            ScriptableDataAssetSettingsAttribute pathSettingsAttribute = typeof(T).GetCustomAttribute<ScriptableDataAssetSettingsAttribute>(true);
+            if (HasCustomPath && pathSettingsAttribute != null && !string.IsNullOrEmpty(pathSettingsAttribute.Name))
             {
-                Directory.CreateDirectory(path);
+                return pathSettingsAttribute.Name;
+            }
+            else
+            {
+                //just return the name of the type
+                Type type = typeof(T);
+                return type.Name;
             }
         }
+
     }
 }
